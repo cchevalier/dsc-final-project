@@ -1,3 +1,5 @@
+## Default .gitgnore from github.com / R
+
 # History files
 .Rhistory
 .Rapp.history
@@ -11,3 +13,9 @@
 # produced vignettes
 vignettes/*.html
 vignettes/*.pdf
+
+
+## Specific part for the dsc final project
+
+# data folder
+/data
