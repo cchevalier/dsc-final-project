@@ -1,21 +1,16 @@
 ## Default .gitgnore from github.com / R
-
 # History files
 .Rhistory
 .Rapp.history
-
 # Example code in package build process
 *-Ex.R
-
 # RStudio files
 .Rproj.user/
-
 # produced vignettes
 vignettes/*.html
 vignettes/*.pdf
-
-
 ## Specific part for the dsc final project
-
 # data folder
 /data
+.Rproj.user
+capstone-project.Rproj
