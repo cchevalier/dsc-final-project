@@ -2,16 +2,16 @@
 
 
 # Set Filenames
-setFilename <- function(filetype, dataFolder="./data", LOCALE="en_US") {
-  file.path(dataFolder, LOCALE, paste(LOCALE, filetype, sep = ""))
+setFilename <- function(filetype, folderData="./data", LOCALE="en_US") {
+  file.path(folderData, LOCALE, paste(LOCALE, filetype, sep = ""))
 }
 
 LOCALE <- "en_US"
-dataFolder <- "./data"
+folderData <- "./data"
 
-fileBlogs   <- setFilename(".blogs.txt",   dataFolder)
-fileNews    <- setFilename(".news.txt",    dataFolder)
-fileTwitter <- setFilename(".twitter.txt", dataFolder)
+fileBlogs   <- setFilename(".blogs.txt",   folderData)
+fileNews    <- setFilename(".news.txt",    folderData)
+fileTwitter <- setFilename(".twitter.txt", folderData)
 
 
 # Get File Stats
@@ -27,9 +27,16 @@ getFileStats(fileTwitter)
 
 
 # Reading files
-dataBlogs <- readLines(fileBlogs)
-dataNews <- readLines(fileNews)
-dataTwitter <- readLines(fileTwitter)
+readFile <- function(filename) {
+  con <- file(filename, open="rb")
+  result <- readLines(con, skipNul = TRUE, encoding="UTF-8")
+  close(con)
+  return(result)
+}
+
+dataBlogs <- readFile(fileBlogs)
+dataNews <- readFile(fileNews)
+dataTwitter <- readFile(fileTwitter)
 
 
 # Data Stats
