@@ -1,21 +1,26 @@
 ---
-title: "Milestone Report"
+title: "Data Science Capstone - Milestone Report"
 author: "CChevalier"
-date: "18 December 2015"
-output: pdf_document
+date: "December 2015"
+output: 
+  html_document: 
+    number_sections: yes
+    toc: yes
 ---
 
+# Introduction
+This milestone report is written as part of the capstone project of the Data Science Specialization from John Hopkins University / Coursera. The final aim of this project is to produce a text prediction app using different Natural Language Processing techniques. The current report is an intermediate report presenting pre-processing and some elementary exploratory analysis off the text dataset provided in the frame of this project. 
 
 
-```{r Preprocessing functions, echo=FALSE}
-
+# Pre-Processing
+  
+```{r I/O functions, echo=FALSE}
 # Set Data Filename
 setDataFilename <- function(fileType, dataFolder="./data", LOCALE="en_US") {
   file.path(dataFolder, 
             LOCALE, 
             paste(LOCALE, ".", fileType, ".txt", sep = ""))
 }
-
 
 # Set Data Sample Filename
 setDataSampleFilename <- function(fileType, sampleRatio, dataSampleFolder="./data-samples", LOCALE="en_US" ) {
@@ -24,7 +29,6 @@ setDataSampleFilename <- function(fileType, sampleRatio, dataSampleFolder="./dat
             paste(LOCALE, ".", fileType, "_", sampleRatio, ".txt", sep = ""))
 }
 
-
 # Reading Data file
 readDataFile <- function(filename) {
   con <- file(filename, open="rb")
@@ -32,28 +36,29 @@ readDataFile <- function(filename) {
   close(con)
   return(result)
 }
+```
 
 
-# Get File Stats
+## Pre-Processing Methodology
+
+Below are reported the most important functions used for the pre-processing part:  
+  
+```{r Pre-Process functions, eval= F, echo=TRUE}
+# getFileStats function
 getFileStats <- function(filename) {
   filesize <- file.info(filename)$size / 1024^2
-  # result <- list(name = filename, size = filesize)
   return(round(filesize))
 }
 
-
-# Resample function
+# resample function
 resample <- function(data, sampleRatio, sampleFilename) {
   dataSample <- sample(data, round(sampleRatio/100 * length(data)))
   write(dataSample, sampleFilename)
-  
   return(dataSample)
 }
 
-
-# Pre-Process
+# Pre-Process function
 preprocess <- function(fileType, dataFolder, LOCALE, dataSampleFolder, sampleRatio) {
-  
   typeFilename <- setDataFilename(fileType, dataFolder, LOCALE)
   typeData <- readDataFile(typeFilename)
 
@@ -63,23 +68,24 @@ preprocess <- function(fileType, dataFolder, LOCALE, dataSampleFolder, sampleRat
   print(paste("     ", length(unlist(strsplit(typeData, "\\s+", perl = T))), "words"))
   print(paste("     ", length(typeData), "lines"))
   
-#   typeSampleFilename <- setDataSampleFilename(fileType, sampleRatio, dataSampleFolder, LOCALE)
-#   typeSampleData <- resample(typeData, sampleRatio, typeSampleFilename)
+  # Resampling for more convenient future exploratory analysis
+  typeSampleFilename <- setDataSampleFilename(fileType, sampleRatio, dataSampleFolder, LOCALE)
+  typeSampleData <- resample(typeData, sampleRatio, typeSampleFilename)
   
   return()
 }
-
 ```
 
-
+## Basic Summary
 ```{r Preprocessing and Summary, cache=TRUE}
-# Settings
+# Current Analysis Settings
 LOCALE <- "en_US"
 dataFolder <- "./data"
 dataSampleFolder <- "./data-samples"
 sampleRatio <- 1
-types <- c("blogs", "news", "twitter")
 
+# Main loop over selected files
+types <- c("blogs", "news", "twitter")
 set.seed(12345)
 for (fileType in types) {
   preprocess(fileType, dataFolder, LOCALE, dataSampleFolder, sampleRatio )
@@ -88,7 +94,10 @@ for (fileType in types) {
 
 
 
+# Exploratory Analysis Methodology
 
+## Sample corpus
+  
 ```{r Load corpus_sample, cache=TRUE}
 library(NLP)
 library(tm)
@@ -100,7 +109,12 @@ corpus_sample <- Corpus(DirSource(file.path(".", dataSampleFolder, LOCALE)),
                         readerControl=list(reader=readPlain, language="en_US"))
 ```
 
-```{r Plotting functions}
+## Methodology
+A document-term matrix or term-document matrix is a mathematical matrix that describes the frequency of terms that occur in a collection of documents (Wikipedia). 
+  
+## Useful TDM Post-Processing functions
+  
+```{r TDM Plotting functions}
 # plotWorldCloud function
 #     adapted from:
 #       Word Cloud in R
@@ -124,26 +138,50 @@ plotWordCloud <- function(tdm, user_scale=c(3,.3)) {
             colors=pal, 
             vfont=c("sans serif","plain"))
 }
+
+# plotTopWords function
+plotTopWords <- function(tdm, N) {
+  
+  m <- as.matrix(tdm)
+  v <- sort(rowSums(m), decreasing=TRUE)
+  d <- data.frame(word = names(v), freq=v)
+
+  barplot(d[1:N,2], names.arg = d[1:N,1], 
+          horiz = T, 
+          cex.names = .6,
+          las=1,
+          legend.text  = paste("Top", N, "words"))
+}
 ```
 
-```{r Uni-grams analysis I, cache=TRUE}
+
+# Exploratory Analysis: Uni-Grams
+
+## Uni-grams on sample corpus cleaned without removing english stopwords
+```{r Uni-grams analysis v1, cache=TRUE}
+# Corpus cleaning, version 1
 corpus_sample_cleaned_1 <- tm_map(corpus_sample, removePunctuation)
 corpus_sample_cleaned_1 <- tm_map(corpus_sample_cleaned_1, tolower)
 corpus_sample_cleaned_1 <- tm_map(corpus_sample_cleaned_1, PlainTextDocument)
 
+# Associated TDM
 tdm_1 <- TermDocumentMatrix(corpus_sample_cleaned_1)
 ```
 
-```{r Uni-grams plotting I, cache=TRUE}
-
+```{r Uni-grams v1 wordCloud Plot, cache=TRUE}
 plotWordCloud(tdm_1, c(8,.6))
-title(main = "Without removing english stopwords")
+title(main = "Sample corpus cleaned without removing english stopwords")
 ```
 
+```{r Uni-grams v1 TopWords Plot, cache=TRUE}
+plotTopWords(tdm_1, 20)
+title(main = "Sample corpus cleaned without removing english stopwords")
+```
+  
+## Uni-grams on sample corpus cleaned including removing english stopwords
 
-
-```{r Uni-grams analysis II, cache=TRUE}
-
+```{r Uni-grams analysis v2, cache=TRUE}
+# Corpus cleaning, version 2
 corpus_sample_cleaned_2 <- tm_map(corpus_sample, removePunctuation)
 corpus_sample_cleaned_2 <- tm_map(corpus_sample_cleaned_2, tolower)
 corpus_sample_cleaned_2 <- tm_map(corpus_sample_cleaned_2, 
@@ -151,13 +189,27 @@ corpus_sample_cleaned_2 <- tm_map(corpus_sample_cleaned_2,
 corpus_sample_cleaned_2 <- tm_map(corpus_sample_cleaned_2, PlainTextDocument)
 
 tdm_2 <- TermDocumentMatrix(corpus_sample_cleaned_2)
-
 ```
 
-```{r Uni-grams plotting II, cache=TRUE}
-
+```{r Uni-grams v2 wordCloud Plot, cache=TRUE}
 plotWordCloud(tdm_2, c(4,.3))
-title(main = "With removing english stopwords")
+title(main = "Sample corpus cleaned including removing english stopwords")
 ```
 
+```{r Uni-grams v2 TopWords Plot, cache=TRUE}
+plotTopWords(tdm_2, 20)
+title(main = "Sample corpus cleaned including removing english stopwords")
+```
 
+# Future Plans 
+
+Immediate plans for me is to derive and analyze Bi-grams and Tri-grams which are more interesting when aiming at building a text prediction app like one can find on smartphones. I have already made some steps towards this goal for the bi-grams (see sample code below) but this stage has proven to be too time / CPU demanding to be presented in this report.
+
+Next on my list is to explore more deeply the different cleaning techniques on corpus data and their influence on Bi-Grams and Tri-Grams. It is already clear that removing stopwords as presented in the current report is a bad idea to produce representative N-grams.
+
+As for the final text prediction app I am clearly a bit behind schedule. My initial feeling is to use N-grams but how to build them, on which sample basis seems a crucial issue due to CPU resource required. More bibliographical research on that topic should tell me more I hope.
+
+```{r, eval=F, cache=TRUE}
+
+```
+# Conclusion
