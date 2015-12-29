@@ -1,0 +1,164 @@
+---
+title: "Milestone Report"
+author: "CChevalier"
+date: "18 December 2015"
+output: html_document
+---
+
+
+
+```{r Preprocessing functions, echo=FALSE}
+
+# Set Data Filename
+setDataFilename <- function(fileType, dataFolder="./data", LOCALE="en_US") {
+  file.path(dataFolder, 
+            LOCALE, 
+            paste(LOCALE, ".", fileType, ".txt", sep = ""))
+}
+
+
+# Set Data Sample Filename
+setDataSampleFilename <- function(fileType, sampleRatio, dataSampleFolder="./data-samples", LOCALE="en_US" ) {
+  file.path(dataSampleFolder, 
+            LOCALE, 
+            paste(LOCALE, ".", fileType, "_", sampleRatio, ".txt", sep = ""))
+}
+
+
+# Reading Data file
+readDataFile <- function(filename) {
+  con <- file(filename, open="rb")
+  result <- readLines(con, skipNul = TRUE, encoding="UTF-8")
+  close(con)
+  return(result)
+}
+
+
+# Get File Stats
+getFileStats <- function(filename) {
+  filesize <- file.info(filename)$size / 1024^2
+  # result <- list(name = filename, size = filesize)
+  return(round(filesize))
+}
+
+
+# Resample function
+resample <- function(data, sampleRatio, sampleFilename) {
+  dataSample <- sample(data, round(sampleRatio/100 * length(data)))
+  write(dataSample, sampleFilename)
+  
+  return(dataSample)
+}
+
+
+# Pre-Process
+preprocess <- function(fileType, dataFolder, LOCALE, dataSampleFolder, sampleRatio) {
+  
+  typeFilename <- setDataFilename(fileType, dataFolder, LOCALE)
+  typeData <- readDataFile(typeFilename)
+
+  # Basic summary 
+  print(paste("File:", typeFilename))
+  print(paste("     ", getFileStats(typeFilename), "Mb"))
+  print(paste("     ", length(unlist(strsplit(typeData, "\\s+", perl = T))), "words"))
+  print(paste("     ", length(typeData), "lines"))
+  
+#   typeSampleFilename <- setDataSampleFilename(fileType, sampleRatio, dataSampleFolder, LOCALE)
+#   typeSampleData <- resample(typeData, sampleRatio, typeSampleFilename)
+  
+  return()
+}
+
+```
+
+
+```{r Preprocessing and Summary, cache=TRUE}
+# Settings
+LOCALE <- "en_US"
+dataFolder <- "./data"
+dataSampleFolder <- "./data-samples"
+sampleRatio <- 1
+types <- c("blogs", "news", "twitter")
+
+set.seed(12345)
+for (fileType in types) {
+  preprocess(fileType, dataFolder, LOCALE, dataSampleFolder, sampleRatio )
+}
+```
+
+
+
+
+```{r Load corpus_sample, cache=TRUE}
+library(NLP)
+library(tm)
+library(RWeka)
+library(RColorBrewer)
+library(wordcloud)
+
+
+# corpus_all <- Corpus(DirSource(file.path(".", dataFolder, LOCALE)),
+#                         readerControl=list(reader=readPlain, language="en_US"))
+
+corpus_sample <- Corpus(DirSource(file.path(".", dataSampleFolder, LOCALE)),
+                        readerControl=list(reader=readPlain, language="en_US"))
+
+
+
+```
+
+```{r Plotting functions}
+plotWordCloud <- function(tdm, user_scale=c(3,.3)) {
+    
+  m <- as.matrix(tdm)
+  v <- sort(rowSums(m), decreasing=TRUE)
+  d <- data.frame(word = names(v), freq=v)
+  
+  pal <- brewer.pal(8, "Set2")
+  pal <- pal[-(1:2)]
+  
+  wordcloud(d$word, d$freq, 
+            scale=user_scale,
+            min.freq=2, 
+            max.words=50, 
+            random.order=F, 
+            rot.per=.15, 
+            colors=pal, 
+            vfont=c("sans serif","plain"))
+}
+```
+
+```{r Uni-grams analysis I, cache=TRUE}
+corpus_sample_cleaned <- tm_map(corpus_sample, removePunctuation)
+corpus_sample_cleaned <- tm_map(corpus_sample_cleaned, tolower)
+corpus_sample_cleaned_1 <- tm_map(corpus_sample_cleaned, PlainTextDocument)
+
+tdm_1 <- TermDocumentMatrix(corpus_sample_cleaned_1)
+```
+
+```{r Uni-grams plotting I, cache=TRUE}
+
+plotWordCloud(tdm_1, c(8,.6))
+title(main = "Without removing english stopwords")
+```
+
+
+
+```{r Uni-grams analysis II, cache=TRUE}
+
+corpus_sample_cleaned <- tm_map(corpus_sample, removePunctuation)
+corpus_sample_cleaned <- tm_map(corpus_sample_cleaned, tolower)
+corpus_sample_cleaned <- tm_map(corpus_sample_cleaned, function(x) removeWords(x, stopwords("english")))
+corpus_sample_cleaned_2 <- tm_map(corpus_sample_cleaned, PlainTextDocument)
+
+tdm_2 <- TermDocumentMatrix(corpus_sample_cleaned_2)
+
+```
+
+```{r Uni-grams plotting II, cache=TRUE}
+
+plotWordCloud(tdm_2, c(4,.3))
+title(main = "With removing english stopwords")
+```
+
+
