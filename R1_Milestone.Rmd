@@ -2,7 +2,7 @@
 title: "Milestone Report"
 author: "CChevalier"
 date: "18 December 2015"
-output: html_document
+output: pdf_document
 ---
 
 
@@ -96,25 +96,23 @@ library(RWeka)
 library(RColorBrewer)
 library(wordcloud)
 
-
-# corpus_all <- Corpus(DirSource(file.path(".", dataFolder, LOCALE)),
-#                         readerControl=list(reader=readPlain, language="en_US"))
-
 corpus_sample <- Corpus(DirSource(file.path(".", dataSampleFolder, LOCALE)),
                         readerControl=list(reader=readPlain, language="en_US"))
-
-
-
 ```
 
 ```{r Plotting functions}
+# plotWorldCloud function
+#     adapted from:
+#       Word Cloud in R
+#       http://www.r-bloggers.com/word-cloud-in-r/
+
 plotWordCloud <- function(tdm, user_scale=c(3,.3)) {
     
   m <- as.matrix(tdm)
   v <- sort(rowSums(m), decreasing=TRUE)
   d <- data.frame(word = names(v), freq=v)
   
-  pal <- brewer.pal(8, "Set2")
+  pal <- brewer.pal(8, "Dark2")
   pal <- pal[-(1:2)]
   
   wordcloud(d$word, d$freq, 
@@ -129,9 +127,9 @@ plotWordCloud <- function(tdm, user_scale=c(3,.3)) {
 ```
 
 ```{r Uni-grams analysis I, cache=TRUE}
-corpus_sample_cleaned <- tm_map(corpus_sample, removePunctuation)
-corpus_sample_cleaned <- tm_map(corpus_sample_cleaned, tolower)
-corpus_sample_cleaned_1 <- tm_map(corpus_sample_cleaned, PlainTextDocument)
+corpus_sample_cleaned_1 <- tm_map(corpus_sample, removePunctuation)
+corpus_sample_cleaned_1 <- tm_map(corpus_sample_cleaned_1, tolower)
+corpus_sample_cleaned_1 <- tm_map(corpus_sample_cleaned_1, PlainTextDocument)
 
 tdm_1 <- TermDocumentMatrix(corpus_sample_cleaned_1)
 ```
@@ -146,10 +144,11 @@ title(main = "Without removing english stopwords")
 
 ```{r Uni-grams analysis II, cache=TRUE}
 
-corpus_sample_cleaned <- tm_map(corpus_sample, removePunctuation)
-corpus_sample_cleaned <- tm_map(corpus_sample_cleaned, tolower)
-corpus_sample_cleaned <- tm_map(corpus_sample_cleaned, function(x) removeWords(x, stopwords("english")))
-corpus_sample_cleaned_2 <- tm_map(corpus_sample_cleaned, PlainTextDocument)
+corpus_sample_cleaned_2 <- tm_map(corpus_sample, removePunctuation)
+corpus_sample_cleaned_2 <- tm_map(corpus_sample_cleaned_2, tolower)
+corpus_sample_cleaned_2 <- tm_map(corpus_sample_cleaned_2, 
+                                  function(x) removeWords(x, stopwords("english")))
+corpus_sample_cleaned_2 <- tm_map(corpus_sample_cleaned_2, PlainTextDocument)
 
 tdm_2 <- TermDocumentMatrix(corpus_sample_cleaned_2)
 
