@@ -2,17 +2,35 @@
 title: "Data Science Capstone - Milestone Report"
 author: "CChevalier"
 date: "December 2015"
-output: 
-  html_document: 
+output:
+  html_document:
     number_sections: yes
+    toc: yes
+  pdf_document:
     toc: yes
 ---
 
 # Introduction
-This milestone report is written as part of the capstone project of the Data Science Specialization from John Hopkins University / Coursera. The final aim of this project is to produce a text prediction app using different Natural Language Processing techniques. The current report is an intermediate report presenting pre-processing and some elementary exploratory analysis off the text dataset provided in the frame of this project. 
-
-
+This milestone report is written as part of the capstone project of the Data Science Specialization from John Hopkins University / Coursera. The final aim of this project is to produce a text prediction app using different Natural Language Processing (NLP) techniques. The current report is an intermediate report presenting pre-processing and some elementary exploratory analysis off the text dataset provided in the frame of this project. 
+  
+  
+---  
+  
 # Pre-Processing
+
+## The Original Text Dataset  
+  
+The provided text dataset is a collection of text from different internet resources (blogs, news feeds and twitter) in four different languages. The current report deals only with the english US version as I have no knowledge of the other three propsed languages. As will be soon later the original dataset is rather large and analysis can only be conducted on a reduced dataset that will be produced during pre-processing.
+
+
+## Pre-Processing Methodology
+
+The pre-processing methodology is the following one:  
+- Load original dataset (3 en_US files)  
+- Derive basic summary for each file (file size on disc, number of words and number of lines)  
+- Resample data to a given fraction of the original one for a more convenient and practical exploratory analysis  
+
+
   
 ```{r I/O functions, echo=FALSE}
 # Set Data Filename
@@ -38,12 +56,9 @@ readDataFile <- function(filename) {
 }
 ```
 
-
-## Pre-Processing Methodology
-
 Below are reported the most important functions used for the pre-processing part:  
   
-```{r Pre-Process functions, eval= F, echo=TRUE}
+```{r Pre-Process functions, eval= T, cache=T, echo=TRUE}
 # getFileStats function
 getFileStats <- function(filename) {
   filesize <- file.info(filename)$size / 1024^2
@@ -77,6 +92,9 @@ preprocess <- function(fileType, dataFolder, LOCALE, dataSampleFolder, sampleRat
 ```
 
 ## Basic Summary
+
+Thi section presents basic summary for each original file as derived during the pre-processing stage. As we can see the original data files are rather big and cannot really be handled with common personal computer resources (at least the ones I have at the moment) in a reasonable time.  
+
 ```{r Preprocessing and Summary, cache=TRUE}
 # Current Analysis Settings
 LOCALE <- "en_US"
@@ -91,13 +109,24 @@ for (fileType in types) {
   preprocess(fileType, dataFolder, LOCALE, dataSampleFolder, sampleRatio )
 }
 ```
-
-
-
+  
+  
+---  
+  
 # Exploratory Analysis Methodology
 
-## Sample corpus
+## Definitions
+
+Before going any further we need to define some terms used hereafter for non data scientist / non NLP enthusiast:  
+- A (text) corpus, in linguistics, is a large and structured set of texts (https://en.wikipedia.org/wiki/Text_corpus)  
+- In the fields of computational linguistics and probability, an n-gram is a contiguous sequence of n items from a given sequence of text or speech (https://en.wikipedia.org/wiki/N-gram).  
+- An n-gram of size 1 is referred to as a "unigram"; size 2 is a "bigram"; size 3 is a "trigram".    
+- A term-document matrix (TDM) is a mathematical matrix that describes the frequency of terms (or N-grams for us from now on) that occur in a collection of documents (https://en.wikipedia.org/wiki/Document-term_matrix).  
+- In computing, stop words are words which are filtered out before or after processing of natural language data text (https://en.wikipedia.org/wiki/Stop_words).  
+
   
+## Sample corpus
+For this exploratory analysis we will use the reduced / resampled dataset (called sample corpus hereafter) produced during the pre-processing phases. Common NLP R packages are also used for this analysis (see code below)  
 ```{r Load corpus_sample, cache=TRUE}
 library(NLP)
 library(tm)
@@ -109,11 +138,24 @@ corpus_sample <- Corpus(DirSource(file.path(".", dataSampleFolder, LOCALE)),
                         readerControl=list(reader=readPlain, language="en_US"))
 ```
 
+  
 ## Methodology
-A document-term matrix or term-document matrix is a mathematical matrix that describes the frequency of terms that occur in a collection of documents (Wikipedia). 
+  
+  On a long run I aim at finding at most frequent N-grams in the sample corpus (N = 1, 2 and 3) in order to build a text prediction application. But time constraints (and a busy end of year followed by the Christmas break with family to be fully honest) has reduced the scope I had in mind. This report therefore presents most frequent unigrams in the derived sample corpus. Likewise the corpus cleaning process is fairly simple (removing punctuation and converting all characters to lower case). The influence of removing or not the english stop words is analysed on most frequent unigrams.       
+      
+In both case, the methodology can therefore be summarize by the following steps:   
+  - Perform a fairly simple cleaning of the sample corpus  (optional: removing english stop words)    
+  - compute the TDM of unigrams  
+  - Plot most frequent unigrams in above TDM using a cloud of words / a barplot   
+  
+  
   
 ## Useful TDM Post-Processing functions
-  
+
+Below are two useful (and universal) plot functions for illustrating most frequent N-grams of a TDM:  
+- as a cloud of N-grams  
+- as an barplot of top X most frequent N-grams  
+
 ```{r TDM Plotting functions}
 # plotWorldCloud function
 #     adapted from:
@@ -153,12 +195,19 @@ plotTopWords <- function(tdm, N) {
           legend.text  = paste("Top", N, "words"))
 }
 ```
+  
+  
+---  
+  
+# Exploratory Analysis: Unigrams and stop words
+  
+  This section presents the most frequent unigrams (words) in a cleaned sample corpus with optional removing of english stop words. It is pretty clear from the results presented below (see associated plots) that removing has a great impact (as it is expected).   
+  
+  Now the question is wheter or not to include this stage in the cleaning process of a corpus. The answer depends on the final aim of the analysis conducted after. For instance if one is performing a "sentiment analysis" of a corpus then rmeoving the stop words (like "the" in english) is mandatory. But for some other purposes (like a N-grams analysis with N > 1) then removing the stop words should be prohibited according to me.  
+  
 
-
-# Exploratory Analysis: Uni-Grams
-
-## Uni-grams on sample corpus cleaned without removing english stopwords
-```{r Uni-grams analysis v1, cache=TRUE}
+## Unigrams in the cleaned sample corpus (excluding removing english stopwords)
+```{r unigrams analysis v1, cache=TRUE}
 # Corpus cleaning, version 1
 corpus_sample_cleaned_1 <- tm_map(corpus_sample, removePunctuation)
 corpus_sample_cleaned_1 <- tm_map(corpus_sample_cleaned_1, tolower)
@@ -168,19 +217,21 @@ corpus_sample_cleaned_1 <- tm_map(corpus_sample_cleaned_1, PlainTextDocument)
 tdm_1 <- TermDocumentMatrix(corpus_sample_cleaned_1)
 ```
 
-```{r Uni-grams v1 wordCloud Plot, cache=TRUE}
+```{r unigrams v1 wordCloud Plot, cache=TRUE}
 plotWordCloud(tdm_1, c(8,.6))
-title(main = "Sample corpus cleaned without removing english stopwords")
+title(main = "unigrams in the cleaned sample corpus \n(excluding removing english stopwords)")
 ```
 
-```{r Uni-grams v1 TopWords Plot, cache=TRUE}
+```{r unigrams v1 TopWords Plot, cache=TRUE}
 plotTopWords(tdm_1, 20)
-title(main = "Sample corpus cleaned without removing english stopwords")
+title(main = "unigrams in the cleaned sample corpus \n(excluding removing english stopwords)")
 ```
   
-## Uni-grams on sample corpus cleaned including removing english stopwords
+  As expected the most frequent words are the stop words and therefore the value of such an analysis would be limited in most cases (unless you are aiming at finding these stop words...)  
+  
+## Unigrams in the cleaned sample corpus (including removing english stopwords)
 
-```{r Uni-grams analysis v2, cache=TRUE}
+```{r unigrams analysis v2, cache=TRUE}
 # Corpus cleaning, version 2
 corpus_sample_cleaned_2 <- tm_map(corpus_sample, removePunctuation)
 corpus_sample_cleaned_2 <- tm_map(corpus_sample_cleaned_2, tolower)
@@ -191,25 +242,45 @@ corpus_sample_cleaned_2 <- tm_map(corpus_sample_cleaned_2, PlainTextDocument)
 tdm_2 <- TermDocumentMatrix(corpus_sample_cleaned_2)
 ```
 
-```{r Uni-grams v2 wordCloud Plot, cache=TRUE}
+```{r unigrams v2 wordCloud Plot, cache=TRUE}
 plotWordCloud(tdm_2, c(4,.3))
-title(main = "Sample corpus cleaned including removing english stopwords")
+title(main = "unigrams in the cleaned sample corpus \n(including removing english stopwords)")
 ```
 
-```{r Uni-grams v2 TopWords Plot, cache=TRUE}
+```{r unigrams v2 TopWords Plot, cache=TRUE}
 plotTopWords(tdm_2, 20)
-title(main = "Sample corpus cleaned including removing english stopwords")
+title(main = "unigrams in the cleaned sample corpus \n(including removing english stopwords)")
 ```
-
+  
+  The most frequent words after removing the english stop words are still common and rather frequent words but would be useful in "sentiment analysis" I believr (with a corpus less "broad")
+  
+---  
+  
 # Future Plans 
 
-Immediate plans for me is to derive and analyze Bi-grams and Tri-grams which are more interesting when aiming at building a text prediction app like one can find on smartphones. I have already made some steps towards this goal for the bi-grams (see sample code below) but this stage has proven to be too time / CPU demanding to be presented in this report.
+Immediate plans for me is to derive and analyze bigrams and trigrams which are more interesting when aiming at building a text prediction app like one can find on smartphones. I have already made some steps towards this goal for the bigrams (see sample code below) but this stage has proven to be too time / CPU demanding to be presented in this report.
+   
+   
+```{r Bigram sample code, eval=F}
+bigramTokenizer <- function(x) {
+  NGramTokenizer(x, Weka_control(min=2, max=2))
+}
 
-Next on my list is to explore more deeply the different cleaning techniques on corpus data and their influence on Bi-Grams and Tri-Grams. It is already clear that removing stopwords as presented in the current report is a bad idea to produce representative N-grams.
+tdm_bigram <- TermDocumentMatrix(corpus_sample_cleaned, control = list(tokenize=bigramTokenizer))
 
-As for the final text prediction app I am clearly a bit behind schedule. My initial feeling is to use N-grams but how to build them, on which sample basis seems a crucial issue due to CPU resource required. More bibliographical research on that topic should tell me more I hope.
-
-```{r, eval=F, cache=TRUE}
-
+plotWordCloud(tdm_bigram)
+title(main = "Bigrams grams in the cleaned sample corpus \n(excluding removing english stopwords)")
 ```
-# Conclusion
+  
+  
+Next on my list is to explore more deeply the different cleaning techniques on corpus data and their influence on bigrams and trigrams. It is already clear that removing stopwords as presented in the current report is a bad idea to produce representative N-grams.
+  
+  
+As for the final text prediction app I am clearly a bit behind schedule. My initial feeling is to use N-grams but how to build them, on which sample basis seems a crucial issue due to CPU resource required. More bibliographical research on that topic should tell me more I hope.
+  
+---  
+  
+# Conclusion  
+  
+  This report has proven to be difficult to complete due to the Holidays season and some travel back to my home country. But in the end I have found it valuable to realise the amount of the work required to complete the whole project and in that perspective I can say "the sooner the ..."  
+  
