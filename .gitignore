@@ -12,5 +12,12 @@ vignettes/*.pdf
 ## Specific part for the dsc final project
 # data folder
 /data
+# added by RSudio / project
 .Rproj.user
 capstone-project.Rproj
+R1_Milestone_cache
+R1_Milestone_files
+data-samples
+misc
+rsconnect
+trash

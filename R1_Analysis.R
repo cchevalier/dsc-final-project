@@ -131,10 +131,11 @@ plotWordCloud(tdm, "plot1b.png")
 title(main = "With removing english stopwords")
 
 
-biGramTokenizer <- function(x) {
+bigramTokenizer <- function(x) {
   NGramTokenizer(x, Weka_control(min=2, max=2))
 }
 
-tdm2 <- TermDocumentMatrix(corpus_sample_cleaned, control = list(tokenize=biGramTokenizer))
+tdm_bigram <- TermDocumentMatrix(corpus_sample_cleaned, control = list(tokenize=bigramTokenizer))
+
 plotWordCloud(tdm, "plot2b.png")
 title(main = "With removing english stopwords")
